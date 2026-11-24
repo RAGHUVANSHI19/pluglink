@@ -1,0 +1,33 @@
+services:
+  migrate:
+    build:
+      context: .
+      target: release
+    environment:
+      DATABASE_URL: ${MIGRATION_DATABASE_URL:-${DATABASE_URL:?Set DATABASE_URL}}
+    restart: "no"
+
+  app:
+    build:
+      context: .
+      target: runtime
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL}
+      APP_ORIGIN: ${APP_ORIGIN:?Set the public HTTPS origin}
+      TRUST_PROXY: ${TRUST_PROXY:-0}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESET_FROM_EMAIL: ${RESET_FROM_EMAIL:-}
+      CANCELLATION_CUTOFF_MINUTES: ${CANCELLATION_CUTOFF_MINUTES:-}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:${HOST_PORT:-3001}:3001"
+    volumes:
+      - uploads:/app/data/uploads
+    restart: unless-stopped
+volumes:
+  uploads:
