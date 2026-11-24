@@ -1,0 +1,786 @@
+.db-page {
+  --db-ink: #172d26;
+  --db-muted: #56675e;
+  --db-green: #087443;
+  --db-green-dark: #075634;
+  --db-border: #dce6df;
+  --db-surface: #f4f8f5;
+  color: var(--db-ink);
+  background: var(--db-surface);
+  min-height: 75vh;
+  padding: clamp(30px, 6vw, 76px) 0;
+}
+.db-wrap {
+  max-width: 1190px;
+  width: min(100% - 56px, 1190px);
+  margin: 0 auto;
+}
+.db-header,
+.db-section-heading,
+.db-between,
+.db-booking-head,
+.db-booking-bottom,
+.db-admin-row,
+.db-stat-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.db-header {
+  align-items: end;
+  margin-bottom: 30px;
+}
+.db-header h1 {
+  font-size: clamp(32px, 4.5vw, 54px);
+  letter-spacing: -0.06em;
+  line-height: 1.02;
+  margin: 0;
+  font-weight: 750;
+}
+.db-header p,
+.db-section-heading p {
+  color: var(--db-muted);
+  margin: 10px 0 0;
+}
+.db-header-action,
+.db-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.db-actions {
+  justify-content: flex-start;
+}
+.db-button {
+  padding: 10px 15px;
+  min-height: 42px;
+  border: 1px solid var(--db-green);
+  border-radius: 9px;
+  background: var(--db-green);
+  color: white;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 650;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.db-button:hover {
+  background: var(--db-green-dark);
+  border-color: var(--db-green-dark);
+  color: white;
+}
+.db-button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+.db-button-secondary {
+  color: var(--db-green-dark);
+  background: #fff;
+  border-color: var(--db-border);
+}
+.db-button-secondary:hover {
+  color: var(--db-green-dark);
+  background: #e9f5ed;
+  border-color: #b5d9c0;
+}
+.db-button-danger {
+  color: #9e2a35;
+  background: #fff;
+  border-color: #ecd3d6;
+}
+.db-button-danger:hover {
+  color: #87202b;
+  background: #fff2f2;
+  border-color: #dcafb6;
+}
+.db-page :is(button, a, input, select, textarea, summary):focus-visible {
+  outline: 2px solid #128957;
+  outline-offset: 2px;
+}
+.db-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(175px, 100%), 1fr));
+  gap: 13px;
+  margin-bottom: 20px;
+}
+.db-stat,
+.db-section,
+.db-empty,
+.db-loading,
+.db-booking {
+  border: 1px solid var(--db-border);
+  background: white;
+  border-radius: 15px;
+}
+.db-stat {
+  padding: 17px;
+}
+.db-stat-top {
+  align-items: center;
+  color: var(--db-muted);
+  font-weight: 620;
+  font-size: 0.85rem;
+}
+.db-stat-icon {
+  display: inline-flex;
+  padding: 8px;
+  background: #e8f5eb;
+  color: var(--db-green-dark);
+  border-radius: 8px;
+}
+.db-stat strong {
+  display: block;
+  font-size: clamp(23px, 3vw, 34px);
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+  margin-top: 7px;
+}
+.db-stat p {
+  color: var(--db-muted);
+  margin: 5px 0 0;
+  font-size: 0.85rem;
+}
+.db-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px;
+  align-items: start;
+}
+.db-section {
+  padding: clamp(15px, 2.5vw, 25px);
+  margin-bottom: 16px;
+  min-width: 0;
+}
+.db-section-heading {
+  align-items: start;
+  margin-bottom: 18px;
+}
+.db-section-heading h2 {
+  margin: 0;
+  font-size: clamp(20px, 2vw, 24px);
+  letter-spacing: -0.033em;
+  line-height: 1.2;
+}
+.db-section-heading p {
+  margin-top: 6px;
+  font-size: 0.92rem;
+}
+.db-section .db-empty {
+  background: #f8faf8;
+}
+.db-empty,
+.db-loading {
+  padding: 28px 18px;
+  text-align: center;
+}
+.db-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+.db-empty svg,
+.db-loading svg {
+  color: var(--db-green);
+}
+.db-empty h3,
+.db-empty p {
+  margin: 0;
+}
+.db-empty h3 {
+  font-size: 1rem;
+}
+.db-empty p {
+  color: var(--db-muted);
+  font-size: 0.9rem;
+}
+.db-empty a {
+  margin-top: 5px;
+}
+.db-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.db-loading svg {
+  animation: db-spin 1s linear infinite;
+}
+@keyframes db-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .db-loading svg {
+    animation: none;
+  }
+}
+.db-notice {
+  margin: 12px 0;
+  padding: 11px 12px;
+  border: 1px solid #eed1d3;
+  background: #fff1f1;
+  color: #922732;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 9px;
+  overflow-wrap: anywhere;
+}
+.db-notice svg {
+  flex: 0 0 auto;
+}
+.db-notice-success {
+  color: #075634;
+  border-color: #badfc6;
+  background: #eef9f1;
+}
+.db-tabs {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--db-border);
+  margin-bottom: 21px;
+}
+.db-tabs button {
+  background: transparent;
+  border: none;
+  padding: 12px 14px;
+  color: var(--db-muted);
+  border-bottom: 2px solid transparent;
+  font-weight: 650;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.db-tabs button[aria-current="page"] {
+  border-bottom-color: var(--db-green);
+  color: var(--db-green-dark);
+}
+.db-tabs button:hover {
+  color: var(--db-green);
+}
+.db-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.77rem;
+  font-weight: 700;
+  color: #4e5b55;
+  background: #eaf0eb;
+  border-radius: 20px;
+  padding: 4px 9px;
+  width: max-content;
+  white-space: nowrap;
+}
+.db-badge-good {
+  color: #125e39;
+  background: #e2f5e9;
+}
+.db-badge-waiting {
+  color: #735211;
+  background: #fff1c9;
+}
+.db-badge-negative {
+  color: #922732;
+  background: #ffe9eb;
+}
+.db-row-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.db-row {
+  border-bottom: 1px solid var(--db-border);
+  padding: 12px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.db-row:first-child {
+  padding-top: 3px;
+}
+.db-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 2px;
+}
+.db-row a,
+.db-text-link {
+  color: var(--db-green-dark);
+  font-weight: 650;
+}
+.db-row a:hover,
+.db-text-link:hover {
+  text-decoration: underline;
+}
+.db-row strong,
+.db-row small {
+  display: block;
+}
+.db-row small,
+.db-help,
+.db-muted {
+  color: var(--db-muted);
+}
+.db-row small {
+  margin-top: 4px;
+}
+.db-bookings {
+  display: grid;
+  gap: 14px;
+}
+.db-booking {
+  padding: clamp(15px, 2.6vw, 23px);
+}
+.db-booking-highlight {
+  outline: 2px solid #76bf98;
+  outline-offset: 2px;
+}
+.db-booking-head {
+  align-items: start;
+}
+.db-booking-head h2,
+.db-booking-head h3 {
+  font-size: clamp(18px, 2.4vw, 23px);
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+.db-booking-head p {
+  color: var(--db-muted);
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+}
+.db-booking-head > div:last-child {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 4px;
+}
+.db-booking-bottom {
+  border-top: 1px solid var(--db-border);
+  padding-top: 13px;
+  margin-top: 13px;
+  align-items: center;
+}
+.db-booking-bottom .db-help {
+  overflow-wrap: anywhere;
+}
+.db-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(112px, 100%), 1fr));
+  gap: 12px;
+  margin: 16px 0 0;
+}
+.db-details dt {
+  color: var(--db-muted);
+  font-size: 0.84rem;
+  margin-bottom: 4px;
+}
+.db-details dd {
+  margin: 0;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.db-form {
+  display: grid;
+  gap: 16px;
+}
+.db-inline-form {
+  border-top: 1px solid var(--db-border);
+  margin-top: 15px;
+  padding-top: 15px;
+}
+.db-form h3 {
+  margin: 0;
+}
+.db-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+}
+.db-full {
+  grid-column: 1 / -1;
+}
+.db-field {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  font-weight: 650;
+  font-size: 0.9rem;
+}
+.db-field input:not([type="checkbox"]),
+.db-field select,
+.db-field textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 11px;
+  border: 1px solid #cbd9cf;
+  border-radius: 8px;
+  background: white;
+  min-height: 42px;
+  color: var(--db-ink);
+  font: inherit;
+  font-weight: 450;
+}
+.db-field textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+.db-field .db-help {
+  font-weight: 450;
+}
+.db-field input[type="checkbox"],
+.db-check input {
+  accent-color: var(--db-green);
+}
+.db-field input[type="file"] {
+  font-size: 0.86rem;
+}
+.db-field input:disabled {
+  background: #eef3ef;
+}
+.db-fieldset {
+  border: 1px solid var(--db-border);
+  border-radius: 10px;
+  padding: 13px;
+  display: grid;
+  gap: 11px;
+  min-width: 0;
+}
+.db-fieldset legend {
+  font-weight: 680;
+  padding: 0 5px;
+}
+.db-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 14px;
+}
+.db-check {
+  display: flex;
+  align-items: start;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+.db-check input {
+  margin-top: 4px;
+}
+.db-help {
+  font-size: 0.84rem;
+  margin: 0;
+  line-height: 1.45;
+}
+.db-admin-list {
+  display: grid;
+  gap: 9px;
+}
+.db-admin-row {
+  flex-wrap: wrap;
+  align-items: center;
+  border: 1px solid var(--db-border);
+  padding: 11px 13px;
+  border-radius: 9px;
+}
+.db-admin-row > div:first-child {
+  min-width: 0;
+}
+.db-admin-row h3 {
+  font-size: 1rem;
+  margin: 0 0 3px;
+}
+.db-admin-row p {
+  margin: 0;
+  color: var(--db-muted);
+  font-size: 0.87rem;
+  overflow-wrap: anywhere;
+}
+.db-admin-row details {
+  width: 100%;
+}
+.db-admin-row summary {
+  cursor: pointer;
+  color: var(--db-green-dark);
+  font-weight: 650;
+}
+.db-search-tools {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+.db-search-tools > label:first-child {
+  flex: 1 1 220px;
+}
+.db-image-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.db-image-list img {
+  object-fit: cover;
+  width: 104px;
+  height: 73px;
+  border: 1px solid var(--db-border);
+  border-radius: 7px;
+}
+.db-image-preview {
+  position: relative;
+}
+.db-image-preview button {
+  display: block;
+  font-size: 0.76rem;
+  border: 0;
+  padding: 3px 0;
+  color: #922732;
+  background: transparent;
+  cursor: pointer;
+}
+.db-price-breakdown {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.db-price-breakdown li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 0;
+}
+.db-price-breakdown li:last-child {
+  border-top: 1px solid var(--db-border);
+  padding-top: 8px;
+  margin-top: 4px;
+  font-weight: 700;
+}
+.db-rating-picker {
+  display: flex;
+  gap: 6px;
+}
+.db-rating-picker button {
+  appearance: none;
+  border: 1px solid var(--db-border);
+  background: white;
+  color: #b16813;
+  display: grid;
+  place-items: center;
+  min-width: 39px;
+  min-height: 39px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.db-rating-picker button[aria-checked="true"] {
+  background: #fff1cb;
+  border-color: #ebbb56;
+}
+.db-hero-row {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 17px;
+}
+.db-review-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.db-review-list li {
+  border-bottom: 1px solid var(--db-border);
+  padding: 12px 0;
+}
+.db-review-list li:last-child {
+  border-bottom: 0;
+}
+.db-review-list p {
+  margin: 6px 0 0;
+}
+.db-review-stars {
+  color: #955609;
+  letter-spacing: 0.08em;
+}
+.db-table-scroll {
+  overflow-x: auto;
+}
+.db-table {
+  width: 100%;
+  text-align: left;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+.db-table :is(td, th) {
+  border-bottom: 1px solid var(--db-border);
+  padding: 9px 8px;
+  vertical-align: middle;
+}
+.db-table th {
+  color: var(--db-muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+.db-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.db-table td:first-child {
+  overflow-wrap: anywhere;
+}
+.db-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.db-quick-actions .db-button {
+  white-space: normal;
+}
+@media (max-width: 760px) {
+  .db-wrap {
+    width: min(100% - 32px, 1190px);
+  }
+  .db-header {
+    align-items: start;
+    flex-direction: column;
+  }
+  .db-cols,
+  .db-hero-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .db-tabs button {
+    padding: 10px 8px;
+  }
+}
+@media (max-width: 435px) {
+  .db-fields {
+    grid-template-columns: 1fr;
+  }
+  .db-booking-head,
+  .db-booking-bottom,
+  .db-section-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+  .db-booking-head > div:last-child {
+    justify-content: start;
+  }
+  .db-admin-row {
+    padding: 10px;
+  }
+}
+.db-full-width {
+  width: 100%;
+}
+.db-space-top {
+  margin-top: 12px;
+}
+.db-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.db-weekdays {
+  display: grid;
+  gap: 7px;
+}
+.db-weekday {
+  display: grid;
+  align-items: start;
+  grid-template-columns: minmax(98px, 1fr) minmax(0, 4fr);
+  gap: 8px;
+  border-top: 1px solid var(--db-border);
+  padding: 7px 0 0;
+}
+.db-weekday > .db-check {
+  padding-top: 9px;
+}
+.db-weekday-windows {
+  display: grid;
+  justify-items: start;
+  gap: 5px;
+}
+.db-weekday-window {
+  display: grid;
+  align-items: center;
+  grid-template-columns: minmax(75px, 135px) minmax(60px, 110px) auto;
+  gap: 8px;
+}
+.db-schedule-action {
+  color: var(--db-green-dark);
+  border: 0;
+  background: transparent;
+  text-decoration: underline;
+  font: inherit;
+  font-size: 0.83rem;
+  cursor: pointer;
+  padding: 3px 0;
+}
+@media (max-width: 440px) {
+  .db-weekday {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .db-weekday > .db-check {
+    padding-top: 2px;
+  }
+}
+.db-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: end;
+  gap: 10px;
+  margin-top: 14px;
+  font-size: 0.89rem;
+  color: var(--db-muted);
+}
+.db-pagination button[disabled] {
+  cursor: default;
+}
+.db-admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  color: var(--db-green-dark);
+  background: #e8f5eb;
+  border-radius: 9px;
+  font-size: 0.89rem;
+  font-weight: 650;
+}
+.db-admin-row .db-review-note {
+  margin-top: 11px;
+  white-space: pre-line;
+}
+.db-review-note strong {
+  display: inline-block;
+  padding-right: 6px;
+  color: var(--db-ink);
+}
+.db-energy {
+  margin: 0 0 18px;
+  border: 1px solid var(--db-border);
+  padding: 14px 13px 4px;
+  border-radius: 10px;
+  min-width: 0;
+}
+.db-energy h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.db-energy p {
+  margin: 4px 0 6px;
+  font-size: 0.88rem;
+  color: var(--db-muted);
+}
+.db-energy-chart {
+  min-width: 0;
+}

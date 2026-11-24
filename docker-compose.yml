@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: pluglink
+      POSTGRES_PASSWORD: pluglink
+      POSTGRES_DB: pluglink
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pluglink-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pluglink -d pluglink"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+volumes:
+  pluglink-postgres:

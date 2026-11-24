@@ -1,0 +1,315 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  HOST
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum StationStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum IdentityMode {
+  DEMO
+  PENDING_EXTERNAL
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  IN_PROGRESS
+  COMPLETED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PENDING
+  PAID
+  FAILED
+}
+
+enum SupportStatus {
+  OPEN
+  RESOLVED
+}
+
+model User {
+  id           String      @id @default(cuid())
+  name         String
+  email        String      @unique
+  phone        String
+  passwordHash String
+  role         Role
+  status       UserStatus  @default(ACTIVE)
+  createdAt    DateTime    @default(now()) @db.Timestamptz
+  updatedAt    DateTime    @updatedAt @db.Timestamptz
+  sessions     Session[]
+  resetTokens  PasswordResetToken[]
+  stations     ChargingStation[]
+  bookings     Booking[]   @relation("BookingOwner")
+  hosted       Booking[]   @relation("BookingHost")
+  reviews      Review[]
+  favorites    Favorite[]
+  notifications Notification[]
+  actions      AdminAction[]
+
+  @@index([role, status])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime @db.Timestamptz
+  createdAt DateTime @default(now()) @db.Timestamptz
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  expiresAt DateTime  @db.Timestamptz
+  usedAt    DateTime? @db.Timestamptz
+  createdAt DateTime  @default(now()) @db.Timestamptz
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model ChargingStation {
+  id          String                @id @default(cuid())
+  hostId      String
+  name        String
+  city        String
+  locality    String
+  address     String
+  description String
+  pricePaise  Int
+  feePaise    Int
+  latitude    Float
+  longitude   Float
+  imageUrls   String[]
+  status      StationStatus         @default(DRAFT)
+  timezone    String                @default("Asia/Kolkata")
+  sample      Boolean               @default(false)
+  createdAt   DateTime              @default(now()) @db.Timestamptz
+  updatedAt   DateTime              @updatedAt @db.Timestamptz
+  host        User                  @relation(fields: [hostId], references: [id])
+  spec        ChargerSpecifications?
+  availability StationAvailability[]
+  blocks      BlockedTime[]
+  verification HostVerification?
+  bookings    Booking[]
+  reviews     Review[]
+  favorites   Favorite[]
+
+  @@index([hostId, status])
+  @@index([status, city, locality])
+}
+
+model ChargerSpecifications {
+  stationId   String          @id
+  chargerType String
+  connector   String
+  powerWatts  Int
+  station     ChargingStation @relation(fields: [stationId], references: [id], onDelete: Cascade)
+
+  @@index([connector, powerWatts])
+}
+
+model StationAvailability {
+  id          String          @id @default(cuid())
+  stationId   String
+  day         Int
+  startMinute Int
+  endMinute   Int
+  station     ChargingStation @relation(fields: [stationId], references: [id], onDelete: Cascade)
+
+  @@unique([stationId, day, startMinute])
+}
+
+model BlockedTime {
+  id        String          @id @default(cuid())
+  stationId String
+  start     DateTime        @db.Timestamptz
+  end       DateTime        @db.Timestamptz
+  reason    String?
+  station   ChargingStation @relation(fields: [stationId], references: [id], onDelete: Cascade)
+
+  @@index([stationId, start, end])
+}
+
+model HostVerification {
+  stationId          String          @id
+  status             StationStatus   @default(DRAFT)
+  identityMode       IdentityMode    @default(PENDING_EXTERNAL)
+  cctvDeclared       Boolean         @default(false)
+  electricalDeclared Boolean         @default(false)
+  termsAccepted      Boolean         @default(false)
+  evidenceNote       String?
+  rejectionReason    String?
+  submittedAt        DateTime?       @db.Timestamptz
+  reviewedAt         DateTime?       @db.Timestamptz
+  station            ChargingStation @relation(fields: [stationId], references: [id], onDelete: Cascade)
+}
+
+model Booking {
+  id                 String          @id @default(cuid())
+  stationId          String
+  ownerId            String
+  hostId             String
+  start              DateTime        @db.Timestamptz
+  end                DateTime        @db.Timestamptz
+  expiresAt          DateTime        @db.Timestamptz
+  energyWh           Int
+  powerWatts         Int
+  pricePaise         Int
+  feePaise           Int
+  totalPaise         Int
+  actualEnergyWh     Int?
+  finalPaise         Int?
+  status             BookingStatus   @default(PENDING)
+  paymentStatus      PaymentStatus   @default(UNPAID)
+  cancellationReason String?
+  cancelledAt        DateTime?       @db.Timestamptz
+  sample             Boolean         @default(false)
+  createdAt          DateTime        @default(now()) @db.Timestamptz
+  updatedAt          DateTime        @updatedAt @db.Timestamptz
+  owner              User            @relation("BookingOwner", fields: [ownerId], references: [id])
+  host               User            @relation("BookingHost", fields: [hostId], references: [id])
+  station            ChargingStation @relation(fields: [stationId], references: [id])
+  chargingSession    ChargingSession?
+  payment            Payment?
+  review             Review?
+  notifications      Notification[]
+
+  @@index([stationId, start, end])
+  @@index([ownerId, start])
+  @@index([hostId, start])
+  @@index([status, expiresAt])
+}
+
+model ChargingSession {
+  bookingId  String    @id
+  startedAt  DateTime  @db.Timestamptz
+  endedAt    DateTime? @db.Timestamptz
+  energyWh   Int?
+  meterSource String   @default("MANUAL")
+  booking    Booking   @relation(fields: [bookingId], references: [id])
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  bookingId         String        @unique
+  amountPaise       Int
+  status            PaymentStatus @default(PENDING)
+  provider          String
+  providerOrderId   String?       @unique
+  providerPaymentId String?       @unique
+  createdAt         DateTime      @default(now()) @db.Timestamptz
+  updatedAt         DateTime      @updatedAt @db.Timestamptz
+  booking           Booking       @relation(fields: [bookingId], references: [id])
+}
+
+model PaymentEvent {
+  id         String   @id @default(cuid())
+  eventId    String   @unique
+  receivedAt DateTime @default(now()) @db.Timestamptz
+}
+
+model Review {
+  id          String          @id @default(cuid())
+  bookingId   String          @unique
+  stationId   String
+  ownerId     String
+  rating      Int
+  comment     String
+  hidden      Boolean         @default(false)
+  reportReason String?
+  reportedAt  DateTime?       @db.Timestamptz
+  sample      Boolean         @default(false)
+  createdAt   DateTime        @default(now()) @db.Timestamptz
+  station     ChargingStation @relation(fields: [stationId], references: [id])
+  owner       User            @relation(fields: [ownerId], references: [id])
+  booking     Booking         @relation(fields: [bookingId], references: [id])
+
+  @@index([stationId, hidden, createdAt])
+  @@index([reportedAt])
+}
+
+model Favorite {
+  userId    String
+  stationId String
+  createdAt DateTime        @default(now()) @db.Timestamptz
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  station   ChargingStation @relation(fields: [stationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, stationId])
+  @@index([stationId])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  bookingId String?
+  kind      String    @default("GENERAL")
+  title     String
+  message   String
+  readAt    DateTime? @db.Timestamptz
+  createdAt DateTime  @default(now()) @db.Timestamptz
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  booking   Booking?  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId, kind, userId])
+  @@index([userId, createdAt])
+}
+
+model SupportRequest {
+  id        String        @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+  status    SupportStatus @default(OPEN)
+  createdAt DateTime      @default(now()) @db.Timestamptz
+
+  @@index([status, createdAt])
+}
+
+model AdminAction {
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String
+  targetType String
+  targetId   String
+  reason     String?
+  createdAt  DateTime @default(now()) @db.Timestamptz
+  admin      User     @relation(fields: [adminId], references: [id])
+
+  @@index([targetType, targetId])
+  @@index([adminId, createdAt])
+}

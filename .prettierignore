@@ -1,0 +1,4 @@
+package-lock.json
+backend/prisma/migrations
+dist
+coverage
