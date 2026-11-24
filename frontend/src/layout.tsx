@@ -1,3 +1,4 @@
+import { Assistant } from "./assistant/Assistant";
 import { Suspense, useEffect, useState } from "react";
 import { Bell, Menu, X, Zap } from "lucide-react";
 import {
@@ -201,6 +202,7 @@ export function AppLayout() {
         </Suspense>
       </main>
       <Footer />
+      <Assistant mode="app" />
     </>
   );
 }
