@@ -8,7 +8,7 @@ Public charging coverage can leave EV drivers without a convenient option, while
 
 [Open the PlugLink demo](https://pluglink-demo-preview.reassuringalder4.chatgpt.site) to explore the EV owner, charging host and administrator roles. The demo uses fictional Jaipur listings, simulated checkout and browser storage. Choose **Ask PlugLink** for help on bookings, pricing and hosting.
 
-The database-backed app runs on Vercel. Its charger directory shows listings after they are approved. [Open PlugLink on Vercel](https://plug-link.vercel.app)
+The database-backed app runs on Vercel. Its charger directory shows approved listings and uses six fictional Jaipur stations as a fallback when they match an otherwise empty search. The demo stations are for browsing only. [Open PlugLink on Vercel](https://plug-link.vercel.app)
 
 ## Run locally
 

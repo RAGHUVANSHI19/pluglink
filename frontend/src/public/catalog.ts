@@ -15,6 +15,7 @@ export interface ChargingStation {
   longitude: number;
   imageUrls: string[];
   sample: boolean;
+  catalogExample?: boolean;
   hostName: string;
   rating: number | null;
   reviewCount: number;

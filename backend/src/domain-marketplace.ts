@@ -8,6 +8,7 @@ import {
 import {
   availableSlots, bookingHorizon, calculateCost, canTransition, dateBounds, distanceKm, localDate, maximumEnergy,
 } from './domain-rules.js';
+import { exampleStations, findExampleStation } from './sample-stations.js';
 import { fail, prisma, requireRole, requireUser } from './shared.js';
 
 const statuses = ['PENDING', 'CONFIRMED', 'CANCELLED', 'IN_PROGRESS', 'COMPLETED', 'EXPIRED'] as const;
@@ -55,17 +56,20 @@ export function marketplaceRouter(): Router {
     const query = parseInput(searchInput, req.query);
     if ((query.lat === undefined) !== (query.lng === undefined)) fail(400, 'Provide both latitude and longitude.');
     const now = new Date();
+    const terms = query.q?.split(/\s+/).filter(Boolean) ?? [];
+    const maxPricePaise = query.maxPrice === undefined ? undefined : Math.round(query.maxPrice * 100);
+    const minPowerWatts = query.minPower === undefined ? undefined : Math.round(query.minPower * 1_000);
     const records = await prisma.chargingStation.findMany({
       where: {
         ...publicStationWhere(),
-        ...(query.maxPrice !== undefined ? { pricePaise: { lte: Math.round(query.maxPrice * 100) } } : {}),
+        pricePaise: maxPricePaise === undefined ? undefined : { lte: maxPricePaise },
         spec: {
           is: {
             ...(query.connector ? { connector: { equals: query.connector, mode: 'insensitive' } } : {}),
-            ...(query.minPower !== undefined ? { powerWatts: { gte: Math.round(query.minPower * 1_000) } } : {}),
+            powerWatts: minPowerWatts === undefined ? undefined : { gte: minPowerWatts },
           },
         },
-        AND: query.q?.split(/\s+/).map((term) => ({
+        AND: terms.map((term) => ({
           OR: [
             { name: { contains: term, mode: 'insensitive' } },
             { city: { contains: term, mode: 'insensitive' } },
@@ -77,12 +81,22 @@ export function marketplaceRouter(): Router {
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
 
-    const stations = records.map((record) => {
-      const station = stationResponse(record, now);
+    const matches = records.map((record) => stationResponse(record, now))
+      .filter((station) => query.available === undefined || station.available === (query.available === 'true'));
+    const examples = matches.length === 0 && query.available !== 'true'
+      ? exampleStations.filter((station) =>
+        (maxPricePaise === undefined || station.pricePaise <= maxPricePaise)
+        && (minPowerWatts === undefined || Math.round(station.powerKw * 1_000) >= minPowerWatts)
+        && (!query.connector || station.connector.toLowerCase() === query.connector.toLowerCase())
+        && terms.every((term) => [station.name, station.city, station.locality]
+          .some((field) => field.toLowerCase().includes(term.toLowerCase()))))
+      : [];
+
+    const stations = (matches.length ? matches : examples).map((station) => {
       const calculatedDistance = query.lat !== undefined && query.lng !== undefined
         ? distanceKm(query.lat, query.lng, station.latitude, station.longitude) : undefined;
       return { ...station, distanceKm: calculatedDistance };
-    }).filter((station) => query.available === undefined || station.available === (query.available === 'true'));
+    });
 
     if (query.sort === 'rating') stations.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0) || b.reviewCount - a.reviewCount);
     if (query.sort === 'price') stations.sort((a, b) => a.pricePaise - b.pricePaise);
@@ -92,6 +106,11 @@ export function marketplaceRouter(): Router {
 
   router.get('/stations/:id', async (req, res) => {
     const id = routeId(req.params.id);
+    const example = findExampleStation(id);
+    if (example) {
+      res.json({ station: { ...example, reviews: [] } });
+      return;
+    }
     const now = new Date();
     const station = await prisma.chargingStation.findFirst({
       where: { id, ...publicStationWhere() },
@@ -112,6 +131,10 @@ export function marketplaceRouter(): Router {
     const date = parseInput(z.string(), req.query.date);
     const bounds = dateBounds(date);
     if (!bounds) fail(400, 'Choose a valid calendar date.');
+    if (findExampleStation(id)) {
+      res.json({ slots: [] });
+      return;
+    }
     const station = await prisma.chargingStation.findFirst({
       where: { id, ...publicStationWhere() },
       select: {
@@ -132,6 +155,7 @@ export function marketplaceRouter(): Router {
     const owner = requireRole(req, 'OWNER');
     const input = parseInput(bookInput, req.body);
     const { stationId, start, end, energyWh } = input;
+    if (findExampleStation(stationId)) fail(409, 'Bookings are unavailable for demo listings.');
     const now = new Date();
     if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || start >= end) {
       fail(400, 'Choose a valid charging time.');

@@ -20,6 +20,8 @@ Routes use the `/api` prefix. Send JSON unless uploading a file or forwarding a 
 
 `GET /stations` accepts `q`, `connector`, `maxPrice` (INR), `minPower` (kW), `available`, `sort`, `lat` and `lng`. Distances are returned when valid coordinates are supplied. Slot dates refer to the station's local calendar.
 
+When no approved listings match, the catalog can return matching fictional Jaipur examples with `catalogExample: true`. These examples have no slots and are excluded from searches with `available=true`.
+
 Create a reservation with `{ "stationId": "...", "start": "<ISO timestamp>", "end": "<ISO timestamp>", "energyWh": 5000 }`. Use a slot returned by the availability endpoint. The server snapshots price and fees, and returns 409 if another active reservation occupies the slot. The server records payment through the payment routes, and uses the signed webhook when test checkout is configured.
 
 A host creates and submits their own station for admin review. A station decision accepts `APPROVED`, `REJECTED` or `SUSPENDED` and an optional reason when applicable. Only public, approved listings are bookable. Owners can review a completed reservation once.

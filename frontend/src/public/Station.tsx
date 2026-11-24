@@ -488,7 +488,7 @@ export function Station() {
             )}
           </p>
         </div>
-        <FavoriteButton stationId={station.id} />
+        {!station.catalogExample && <FavoriteButton stationId={station.id} />}
       </header>
       <div className="pl-station-detail-grid">
         <div className="pl-station-main">
@@ -562,14 +562,16 @@ export function Station() {
             <Suspense fallback={<p role="status">Loading the map…</p>}>
               <StationMap stations={[station]} />
             </Suspense>
-            <a
-              className="pl-btn pl-btn-outline pl-directions"
-              href={directions}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Navigation size={16} aria-hidden="true" /> Open map location
-            </a>
+            {!station.catalogExample && (
+              <a
+                className="pl-btn pl-btn-outline pl-directions"
+                href={directions}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Navigation size={16} aria-hidden="true" /> Open map location
+              </a>
+            )}
           </section>
           <section className="pl-panel">
             <h2>
@@ -595,7 +597,16 @@ export function Station() {
           </section>
         </div>
         <aside>
-          <BookingPanel station={station} key={station.id} />
+          {station.catalogExample ? (
+            <section className="pl-panel">
+              <h2>Demo station</h2>
+              <p>This fictional listing shows how charger details appear.</p>
+              <p>Example rate {money(station.pricePaise)} / kWh</p>
+              <p>Bookings are unavailable for demo listings.</p>
+            </section>
+          ) : (
+            <BookingPanel station={station} key={station.id} />
+          )}
         </aside>
       </div>
     </div>

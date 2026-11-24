@@ -148,6 +148,29 @@ describe.skipIf(!testDatabaseUrl)('PlugLink API on PostgreSQL', () => {
     await owner.get('/api/auth/me').expect(200, { user: null });
   });
 
+  it('shows matching catalog examples with filters and keeps their booking routes read-only', async () => {
+    const guest = request(app);
+    const owner = request.agent(app);
+    const exampleId = 'example-greencharge';
+    const exampleMatch = await guest.get('/api/stations').query({
+      q: 'Jaipur vaishali', connector: 'type 2', maxPrice: 12, minPower: 7, available: 'false',
+    }).expect(200);
+    expect(exampleMatch.body).toMatchObject({
+      total: 1, stations: [{ id: exampleId, catalogExample: true, sample: true, available: false }],
+    });
+    await guest.get('/api/stations').query({ q: 'Jaipur vaishali', connector: 'CHAdeMO' })
+      .expect(200, { stations: [], total: 0 });
+    const detail = await guest.get(`/api/stations/${exampleId}`).expect(200);
+    expect(detail.body.station).toMatchObject({ id: exampleId, catalogExample: true, reviews: [] });
+    const start = new Date(Date.now() + 24 * 3_600_000);
+    await guest.get(`/api/stations/${exampleId}/slots`).query({ date: localDate(start) }).expect(200, { slots: [] });
+    await register(owner, 'catalog-example-owner', 'OWNER');
+    await owner.post('/api/bookings').send({
+      stationId: exampleId, start: start.toISOString(), end: new Date(start.getTime() + 3_600_000).toISOString(),
+      energyWh: 1_000,
+    }).expect(409, { message: 'Bookings are unavailable for demo listings.' });
+  });
+
   it('approves a host application then protects booking, test payment and review lifecycles', async () => {
     const host = request.agent(app);
     const owner = request.agent(app);

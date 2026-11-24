@@ -317,6 +317,11 @@ export function Discover() {
       )}
       {catalog.isSuccess && (
         <>
+          {stations.some((station) => station.catalogExample) && (
+            <p className="pl-location-feedback">
+              These fictional stations are for browsing only.
+            </p>
+          )}
           {view === "map" && (
             <Suspense
               fallback={

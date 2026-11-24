@@ -45,7 +45,9 @@ export function StationCard({ station }: { station: ChargingStation }) {
           </span>
           <span>{station.connector}</span>
           <span className={station.available ? "pl-open-tag" : ""}>
-            {station.available ? "Open slots" : "No open slots"}
+            {station.catalogExample
+              ? "Demo only"
+              : station.available ? "Open slots" : "No open slots"}
           </span>
         </div>
         <div className="pl-station-price">

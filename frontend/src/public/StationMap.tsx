@@ -74,7 +74,9 @@ export default function StationMap({
       }).addTo(layer);
       const popup = document.createElement("div");
       const name = document.createElement("strong");
-      name.textContent = station.name;
+      name.textContent = station.catalogExample
+        ? `${station.name} (demo listing)`
+        : station.name;
       const details = document.createElement("p");
       details.textContent = `${station.locality} · ${money(station.pricePaise)}/kWh`;
       const link = document.createElement("a");

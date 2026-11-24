@@ -68,7 +68,10 @@ function stationAnswer(
         .map((station) => {
           return `${station.name}${station.sample ? " (demo listing)" : ""} in ${station.locality} lists ${station.connector} at ${station.powerKw} kW, ${money(station.pricePaise)}/kWh, and a ${money(station.feePaise)} convenience fee.`;
         })
-        .join(" ") + " Open the station page to check available slots.",
+        .join(" ") +
+      (selected.every((station) => station.catalogExample)
+        ? " These demo listings are for browsing only."
+        : " Open the station page to check available slots."),
     links: selected.map((station) => ({
       label: station.name,
       to: "/chargers/" + encodeURIComponent(station.id),
