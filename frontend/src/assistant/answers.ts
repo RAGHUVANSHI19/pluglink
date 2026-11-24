@@ -10,6 +10,35 @@ type Guide = {
 };
 
 const guide = {
+  about: {
+    examples: [
+      "what is PlugLink",
+      "what does PlugLink do",
+      "what is this website",
+      "how does the PlugLink marketplace work",
+      "what can i do on this site",
+      "explain this app",
+    ],
+    text: "PlugLink connects EV drivers with people who share residential chargers. Drivers can compare stations and reserve charging time. Hosts can set their rates and availability, and submit listings for review.",
+    demo: "PlugLink is a marketplace for shared residential EV charging. Use this preview to explore fictional Jaipur listings and try booking, hosting, and administration with demo accounts.",
+    links: [
+      { label: "How It Works", to: "/how-it-works" },
+      { label: "About PlugLink", to: "/about" },
+    ],
+  },
+  bookings: {
+    examples: [
+      "where are my bookings",
+      "show my reservations",
+      "view booking history",
+      "where are my past and upcoming bookings",
+      "how do i check my reservation status",
+      "find my booking details",
+      "where are my confirmed slots",
+    ],
+    text: "Open My Bookings to see your upcoming and past reservations and their statuses. Select a reservation to see its price, payment status, and arrival details when available.",
+    links: [{ label: "My Bookings", to: "/owner/bookings" }],
+  },
   discover: {
     examples: [
       "find an ev charger",
@@ -210,7 +239,6 @@ const guide = {
       "change my profile or email",
       "how do i get a demo account",
       "login help",
-      "find my past bookings",
       "my account is not opening",
       "where are my favorite stations",
     ],
@@ -259,6 +287,7 @@ const guide = {
       "charger is hot",
       "damaged cable",
       "overheating connector",
+      "do you have emergency support",
     ],
     text: "Follow the station’s arrival and safety instructions. If you see damage, overheating, or another electrical hazard, stop using the charger if it’s safe, move away, and alert the host. For an immediate danger, contact local emergency services.",
     links: [
