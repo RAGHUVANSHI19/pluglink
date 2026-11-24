@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useHref } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { money } from "../lib";
@@ -17,30 +18,35 @@ export default function StationMap({
   selectedId?: string;
   onSelect?: (id: string) => void;
 }) {
+  const chargersPath = useHref("/chargers");
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const markers = useRef<Map<string, L.Marker>>(new Map());
 
   useEffect(() => {
     if (!container.current) return;
-    const view = L.map(container.current, { scrollWheelZoom: false }).setView(
-      jaipur,
-      12,
-    );
+    const view = L.map(container.current, {
+      scrollWheelZoom: false,
+      zoomAnimation: false,
+      fadeAnimation: false,
+      markerZoomAnimation: false,
+    }).setView(jaipur, 12, { animate: false });
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
       maxZoom: 19,
     }).addTo(view);
     map.current = view;
-    const observer = new ResizeObserver(() =>
-      view.invalidateSize({ pan: false }),
-    );
+    const observer = new ResizeObserver(() => {
+      if (map.current === view)
+        view.invalidateSize({ pan: false, animate: false });
+    });
     observer.observe(container.current);
     return () => {
       observer.disconnect();
-      view.remove();
       map.current = null;
+      view.stop();
+      view.remove();
     };
   }, []);
 
@@ -72,10 +78,12 @@ export default function StationMap({
       const details = document.createElement("p");
       details.textContent = `${station.locality} · ${money(station.pricePaise)}/kWh`;
       const link = document.createElement("a");
-      link.href = `/chargers/${encodeURIComponent(station.id)}`;
+      link.href = `${chargersPath}/${encodeURIComponent(station.id)}`;
       link.textContent = "View station";
       popup.append(name, details, link);
-      marker.bindPopup(popup).on("click", () => onSelect?.(station.id));
+      marker
+        .bindPopup(popup, { autoPan: false })
+        .on("click", () => onSelect?.(station.id));
       created.set(station.id, marker);
       points.push(position);
     }
@@ -95,15 +103,19 @@ export default function StationMap({
         .addTo(layer);
       points.push(userPosition);
     }
-    if (points.length === 1) view.setView(points[0], 14);
+    if (points.length === 1) view.setView(points[0], 14, { animate: false });
     if (points.length > 1)
-      view.fitBounds(points, { padding: [25, 25], maxZoom: 15 });
-    if (!points.length) view.setView(jaipur, 12);
+      view.fitBounds(points, {
+        padding: [25, 25],
+        maxZoom: 15,
+        animate: false,
+      });
+    if (!points.length) view.setView(jaipur, 12, { animate: false });
     markers.current = created;
     return () => {
       layer.remove();
     };
-  }, [stations, coordinates, onSelect]);
+  }, [stations, coordinates, onSelect, chargersPath]);
 
   useEffect(() => {
     if (selectedId) markers.current.get(selectedId)?.openPopup();
