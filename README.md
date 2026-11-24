@@ -4,12 +4,16 @@ PlugLink is a community EV charging marketplace for Jaipur, Rajasthan. EV owners
 
 Public charging coverage can leave EV drivers without a convenient option, while residential chargers often sit idle. PlugLink makes approved residential chargers discoverable and reservable during host-selected hours, with upfront INR pricing and a booking record for both parties.
 
+## Live demo
+
+[Open the PlugLink demo](https://pluglink-demo-preview.reassuringalder4.chatgpt.site) to explore the EV owner, charging host and administrator roles. The demo uses fictional Jaipur listings, simulated checkout and browser storage. Choose **Ask PlugLink** for help on bookings, pricing and hosting.
+
 ## Run locally
 
 Use Node.js 22.12 or newer (with npm), PostgreSQL 16 or newer, and VS Code or another editor. Docker Desktop is optional if PostgreSQL is already installed. On Windows 11, run these commands from the project folder in PowerShell.
 
 ```powershell
-npm install
+npm ci
 Copy-Item .env.example .env
 docker compose up -d --wait postgres
 npm run db:generate
@@ -47,6 +51,8 @@ Owners and hosts can sign up from the website. Admin accounts are provisioned se
 - Reserve an available slot through a backend transaction. Manage bookings, cancellations, payments, notifications and post-session reviews.
 - Create and edit host listings, manage charging hours and date blocks, submit compliance declarations, manage sessions, and view earnings.
 - Review host applications, approve and suspend stations, manage users, inspect bookings and payment activity, and moderate reported reviews from the admin panel.
+- Review mismatches between payments and final charging costs with an audited administrator decision.
+- Ask the browser-based PlugLink assistant for help grounded in the site's help content and station catalog.
 - Persist support requests, profile changes, sessions, favorite stations and all marketplace workflow state in PostgreSQL.
 
 ## Technology and project layout
@@ -86,7 +92,7 @@ Playwright starts Vite and Express from `npm run dev` unless a local server is a
 
 ## Deployment and limitations
 
-The production build supports a same-origin deployment on a Node.js host with managed PostgreSQL. Set the canonical HTTPS origin and database connection string, run migrations, build the frontend and backend, then start Express. See the full environment and hosting notes. [Deployment](docs/deployment.md)
+The production build serves React and Express from one HTTPS origin backed by PostgreSQL. The Docker release includes a non-root runtime image and a separate migration job. The operator CLI provisions administrator accounts using password input from standard input. See the environment variables, release commands and hosting prerequisites. [Deployment](docs/deployment.md)
 
 - Razorpay requires test credentials and a registered webhook secret. The local demo payment flow is available without these credentials.
 - Payment review flags captured payments that differ from final charges or belong to inactive reservations. Admins can record an auditable decision. Moving money or issuing a refund still requires the billing provider.
