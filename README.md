@@ -8,6 +8,8 @@ Public charging coverage can leave EV drivers without a convenient option, while
 
 [Open the PlugLink demo](https://pluglink-demo-preview.reassuringalder4.chatgpt.site) to explore the EV owner, charging host and administrator roles. The demo uses fictional Jaipur listings, simulated checkout and browser storage. Choose **Ask PlugLink** for help on bookings, pricing and hosting.
 
+The database-backed app runs on Vercel. Its charger directory shows listings after they are approved. [Open PlugLink on Vercel](https://plug-link.vercel.app)
+
 ## Run locally
 
 Use Node.js 22.12 or newer (with npm), PostgreSQL 16 or newer, and VS Code or another editor. Docker Desktop is optional if PostgreSQL is already installed. On Windows 11, run these commands from the project folder in PowerShell.
@@ -92,7 +94,7 @@ Playwright starts Vite and Express from `npm run dev` unless a local server is a
 
 ## Deployment and limitations
 
-The production build serves React and Express from one HTTPS origin backed by PostgreSQL. The Docker release includes a non-root runtime image and a separate migration job. The operator CLI provisions administrator accounts using password input from standard input. See the environment variables, release commands and hosting prerequisites. [Deployment](docs/deployment.md)
+The production build serves React and Express from one HTTPS origin backed by PostgreSQL. The Docker release includes a non-root runtime image and a separate migration job. The operator CLI provisions administrator accounts using password input from standard input. The repository also includes a Vercel build for the Express API and React site. See the environment variables, release commands and hosting prerequisites. [Deployment](docs/deployment.md)
 
 - Razorpay requires test credentials and a registered webhook secret. The local demo payment flow is available without these credentials.
 - Payment review flags captured payments that differ from final charges or belong to inactive reservations. Admins can record an auditable decision. Moving money or issuing a refund still requires the billing provider.

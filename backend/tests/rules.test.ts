@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   availableSlots,
   calculateCost,
@@ -8,6 +8,7 @@ import {
   localDate,
   maximumEnergy,
 } from '../src/domain-rules.js';
+import { configuredAppOrigin } from '../src/deployment-origin.js';
 import { paymentVariance } from '../src/payment-variance.js';
 import { requireRole } from '../src/shared.js';
 import type { Request } from 'express';
@@ -88,5 +89,24 @@ describe('payment variance', () => {
     expect(paymentVariance('COMPLETED', 10_000, 10_000)).toBeNull();
     expect(paymentVariance('EXPIRED', null, null)).toBeNull();
     expect(paymentVariance('CONFIRMED', null, 10_000)).toBeNull();
+  });
+});
+
+describe('Vercel origin configuration', () => {
+  it('uses the deployment origin for previews and allows a canonical production origin override', () => {
+    vi.stubEnv('VERCEL', '1');
+    vi.stubEnv('VERCEL_URL', 'pluglink-preview.vercel.app');
+    vi.stubEnv('VERCEL_PROJECT_PRODUCTION_URL', 'pluglink.vercel.app');
+    vi.stubEnv('APP_ORIGIN', undefined);
+    try {
+      vi.stubEnv('VERCEL_ENV', 'preview');
+      expect(configuredAppOrigin()).toBe('https://pluglink-preview.vercel.app');
+      vi.stubEnv('VERCEL_ENV', 'production');
+      expect(configuredAppOrigin()).toBe('https://pluglink.vercel.app');
+      vi.stubEnv('APP_ORIGIN', 'https://charging.example');
+      expect(configuredAppOrigin()).toBe('https://charging.example');
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });

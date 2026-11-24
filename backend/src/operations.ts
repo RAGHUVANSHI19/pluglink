@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { Readable } from 'node:stream';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import express, { Router } from 'express';
+import express, { Router, type RequestHandler } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { emailField, nameField, phoneField, publicUserSelect } from './auth.js';
@@ -44,20 +45,59 @@ function imageExtension(contentType: string | false | null, file: Buffer) {
   fail(415, 'Choose a valid JPEG, PNG, or WebP image.');
 }
 
-export function uploadRouter() {
+function blobToken() {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) fail(503, 'Hosted photo storage is not configured.');
+  return token;
+}
+
+export const hostedUploadReader: RequestHandler = async (request, response) => {
+  const token = blobToken();
+  const { get } = await import('@vercel/blob');
+  const result = await get(`pluglink-uploads${request.path}`, { access: 'private', token });
+  if (!result || result.statusCode !== 200 || !fileTypes.includes(result.blob.contentType)) {
+    fail(404, 'The requested image was not found.');
+  }
+  response.setHeader('Content-Type', result.blob.contentType);
+  response.setHeader('Content-Length', result.blob.size);
+  response.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+  if (request.method === 'HEAD') {
+    await result.stream.cancel();
+    response.end();
+    return;
+  }
+  const stream = Readable.from(result.stream);
+  stream.on('error', () => response.destroy());
+  response.on('close', () => stream.destroy());
+  stream.pipe(response);
+};
+
+export function uploadRouter(storage: 'filesystem' | 'blob' = 'filesystem') {
   const router = Router();
   router.post(
     '/',
     (request, _response, next) => { requireRole(request, 'HOST'); next(); },
     abuseLimit(40, 'Too many uploads. Try again later.'),
-    express.raw({ type: fileTypes, limit: '5mb', inflate: false }),
+    express.raw({ type: fileTypes, limit: storage === 'blob' ? '4mb' : '5mb', inflate: false }),
     async (request, response) => {
       if (!Buffer.isBuffer(request.body)) fail(415, 'Upload a JPEG, PNG, or WebP image.');
       const extension = imageExtension(request.is(fileTypes), request.body);
       const filename = `${randomUUID()}.${extension}`;
-      const directory = uploadDirectory();
-      await mkdir(directory, { recursive: true });
-      await writeFile(resolve(directory, filename), request.body, { flag: 'wx', mode: 0o640 });
+      if (storage === 'blob') {
+        const token = blobToken();
+        const { put } = await import('@vercel/blob');
+        await put(`pluglink-uploads/${filename}`, request.body, {
+          access: 'private',
+          token,
+          addRandomSuffix: false,
+          allowOverwrite: false,
+          contentType: fileTypes.find((type) => request.is(type)),
+        });
+      } else {
+        const directory = uploadDirectory();
+        await mkdir(directory, { recursive: true });
+        await writeFile(resolve(directory, filename), request.body, { flag: 'wx', mode: 0o640 });
+      }
       response.status(201).json({ url: `/uploads/${filename}` });
     },
   );

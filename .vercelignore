@@ -1,0 +1,10 @@
+.env
+.env.*
+**/.env
+**/.env.*
+**/uploads
+**/node_modules
+**/test-results
+**/playwright-report
+**/coverage
+**/*.log

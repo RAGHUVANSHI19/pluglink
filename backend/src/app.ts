@@ -7,8 +7,9 @@ import express, { type ErrorRequestHandler, type Request } from 'express';
 import helmet from 'helmet';
 import { ZodError } from 'zod';
 import { authRouter, loadSession } from './auth.js';
+import { configuredAppOrigin } from './deployment-origin.js';
 import { domainRouter } from './domain.js';
-import { adminSupportRouter, notificationRouter, supportRouter, uploadDirectory, uploadRouter, userRouter } from './operations.js';
+import { adminSupportRouter, notificationRouter, supportRouter, hostedUploadReader, uploadDirectory, uploadRouter, userRouter } from './operations.js';
 import { acceptPaymentWebhook, paymentRouter } from './payments.js';
 import { fail, HttpError, prisma } from './shared.js';
 
@@ -20,7 +21,7 @@ const mutation = ['POST', 'PATCH', 'PUT', 'DELETE'];
 
 function configuration() {
   const production = process.env.NODE_ENV === 'production';
-  const origins = (process.env.APP_ORIGIN ?? (production ? '' : 'http://localhost:5173'))
+  const origins = (configuredAppOrigin() ?? (production ? '' : 'http://localhost:5173'))
     .split(',').map((origin) => origin.trim()).filter(Boolean)
     .map((origin) => {
       const url = new URL(origin);
@@ -78,7 +79,7 @@ const handleError: ErrorRequestHandler = (error: unknown, _request, response, ne
   const expected = new Map([
     [400, 'The request could not be read.'],
     [404, 'The requested resource was not found.'],
-    [413, 'The request is too large. Images must be 5 MB or less.'],
+    [413, 'The request exceeds this deployment’s upload size limit.'],
     [415, 'The request uses an unsupported content type or encoding.'],
   ]);
   if (typeof status === 'number' && expected.has(status)) {
@@ -91,7 +92,12 @@ const handleError: ErrorRequestHandler = (error: unknown, _request, response, ne
   response.status(500).json({ message: 'Something went wrong. Try again or contact support.' });
 };
 
-export function createApp() {
+export function createApp(
+  { serveFrontend = true, uploadStorage = 'filesystem' }: {
+    serveFrontend?: boolean;
+    uploadStorage?: 'filesystem' | 'blob';
+  } = {},
+) {
   const config = configuration();
   const app = express();
   app.disable('x-powered-by');
@@ -154,7 +160,7 @@ export function createApp() {
   app.use('/api/notifications', notificationRouter());
   app.use('/api/support', supportRouter());
   app.use('/api/admin/support', adminSupportRouter());
-  app.use('/api/uploads', uploadRouter());
+  app.use('/api/uploads', uploadRouter(uploadStorage));
   app.use('/api/payments', paymentRouter());
   app.use('/api', domainRouter());
   app.use('/api', () => fail(404, 'The requested API endpoint was not found.'));
@@ -164,9 +170,11 @@ export function createApp() {
       fail(404, 'The requested image was not found.');
     }
     next();
-  }, express.static(uploadDirectory(), { maxAge: '7d', immutable: true, index: false, fallthrough: false }));
+  }, uploadStorage === 'blob'
+    ? hostedUploadReader
+    : express.static(uploadDirectory(), { maxAge: '7d', immutable: true, index: false, fallthrough: false }));
 
-  if (config.production || existsSync(frontendIndex)) {
+  if (serveFrontend && (config.production || existsSync(frontendIndex))) {
     app.use(express.static(frontendDirectory, { maxAge: '1h', index: false }));
     app.get('/{*path}', (request, response) => {
       if (staticExtensions.test(request.path)) fail(404, 'The requested asset was not found.');

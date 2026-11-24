@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { Router, type Request, type RequestHandler, type Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
+import { configuredAppOrigin } from './deployment-origin.js';
 import { fail, prisma, type AuthUser } from './shared.js';
 
 const sessionLifetime = 7 * 24 * 60 * 60 * 1000;
@@ -103,7 +104,7 @@ export const loadSession: RequestHandler = async (request, _response, next) => {
 function resetEmailSettings() {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.RESET_FROM_EMAIL;
-  const origin = process.env.APP_ORIGIN?.split(',')[0]?.trim();
+  const origin = configuredAppOrigin()?.split(',')[0]?.trim();
   return key && from && origin ? { key, from, origin } : undefined;
 }
 

@@ -1,6 +1,6 @@
 # Deployment
 
-For a public-facing environment, use a Node.js service with a managed PostgreSQL database and a single canonical HTTPS origin for both the API and frontend. A Node.js service on Render is one possible host. A separate Vercel frontend requires a correctly configured same-origin API proxy or a deliberately tested cookie and origin setup.
+For a public-facing environment, use a managed PostgreSQL database and a single canonical HTTPS origin for both the API and frontend. The application supports a Node.js service, a container release, and Vercel.
 
 ## Build and start
 
@@ -40,6 +40,28 @@ unset pluglink_admin_password
 
 For a native Node.js deployment, use `npm run admin:provision --` with the same flags and password input. Rerunning for the same active administrator preserves the account and password. Email addresses already held by owner or host accounts need a separate administrator address.
 
+## Vercel
+
+Import the repository with its root directory selected. The checked-in `vercel.json` builds the React site and packages the Express API as one Node.js function. Vercel serves the React assets directly, including deep links such as `/chargers`. Requests to `/api` and `/uploads` reach the same-origin function.
+
+1. Connect a PostgreSQL 16 or newer database and add a pooled `DATABASE_URL` to the project environment. Use a separate database or branch for Preview deployments. The migration role needs permission to enable `btree_gist`.
+2. Apply the migrations as a release step. Run `npm run db:migrate` with `DATABASE_URL` set to the provider's direct migration connection. Use the pooled URL for the running application. Builds package the application without applying migrations.
+3. Expose Vercel's system environment variables or set `APP_ORIGIN` to the exact HTTPS URL visitors will use. Set an explicit origin when assigning a custom domain. Set `TRUST_PROXY` according to the hosting network's trusted forwarding hops.
+4. Connect a private Vercel Blob store to enable station photo uploads. Use the project's `BLOB_READ_WRITE_TOKEN`. The API accepts validated JPEG, PNG, and WebP images up to 4 MiB and serves them on same-origin image URLs.
+5. Deploy, then check the homepage, direct navigation to a station or dashboard, and `/api/health`. Create the first administrator with the operator command above against the migrated database.
+
+Set production integrations, such as Razorpay sandbox and password recovery mail, on the Vercel project. The in-app inbox computes due reminders when opened, so the serverless function does not run a background timer.
+
+For an authenticated CLI deployment, connect the project and run:
+
+```bash
+npm ci
+npm run build:vercel
+vercel deploy --prebuilt
+```
+
+For a production prebuilt deployment, pull the production project settings first and use `vercel deploy --prebuilt --prod`. Keep the local `.vercel` directory and all credential files out of Git.
+
 ## Environment settings
 
 | Setting | Purpose |
@@ -55,6 +77,7 @@ For a native Node.js deployment, use `npm run admin:provision --` with the same 
 | `RESEND_API_KEY` and `RESET_FROM_EMAIL` | Optional email provider credentials and verified sender for password recovery. |
 | `CANCELLATION_CUTOFF_MINUTES` | Minimum lead time for a user or host to cancel a future booking. |
 | `UPLOAD_DIR` | Optional location for server-managed uploads. |
+| `BLOB_READ_WRITE_TOKEN` | Private Vercel Blob store credential for hosted station photos. |
 | `TEST_DATABASE_URL` | Separate PostgreSQL connection for API integration tests. |
 
 If you enable local filesystem uploads on a host, give the service persistent storage before accepting user uploads. Use an appropriately configured object store or equivalent when running multiple instances. Retain database backups and confirm that secret or application logs exclude session tokens, passwords, payment secrets and private verification details.
