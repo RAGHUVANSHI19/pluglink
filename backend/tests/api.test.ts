@@ -76,7 +76,11 @@ describe.skipIf(!testDatabaseUrl)('PlugLink API on PostgreSQL', () => {
       const station = await prisma.chargingStation.findFirst({ where: { name: stationName }, select: { id: true } });
       if (station) {
         const { id: stationId } = station;
+        const bookingIds = (await prisma.booking.findMany({ where: { stationId }, select: { id: true } }))
+          .map(({ id }) => id);
         await prisma.$transaction([
+          prisma.paymentReview.deleteMany({ where: { bookingId: { in: bookingIds } } }),
+          prisma.adminAction.deleteMany({ where: { targetType: 'BOOKING', targetId: { in: bookingIds } } }),
           prisma.review.deleteMany({ where: { stationId } }),
           prisma.chargingSession.deleteMany({ where: { booking: { stationId } } }),
           prisma.payment.deleteMany({ where: { booking: { stationId } } }),
@@ -236,6 +240,27 @@ describe.skipIf(!testDatabaseUrl)('PlugLink API on PostgreSQL', () => {
     await host.patch(sessionPath).send({ status: 'IN_PROGRESS' }).expect(200);
     const done = await host.patch(sessionPath).send({ status: 'COMPLETED', actualEnergyWh: 900 }).expect(200);
     expect(done.body.booking).toMatchObject({ status: 'COMPLETED', actualEnergyWh: 900, finalPaise: 3_080 });
+    const path = '/api/admin/payment-reviews';
+    const variance = { kind: 'CHARGED_MORE', amountPaise: 120, reviewedAt: null };
+    expect(done.body.booking.paymentVariance).toEqual(variance);
+    await owner.get(path).expect(403);
+    await owner.put(path + '/' + bookingId).send({ note: 'Unauthorized review attempt' }).expect(403);
+    const open = await admin.get(path).expect(200);
+    expect(open.body.bookings).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: bookingId, paymentVariance: variance }),
+    ]));
+    const note = 'Compared the test checkout record with the final charge.';
+    await admin.put(path + '/' + bookingId).send({ note: 'x' }).expect(400);
+    const resolution = await admin.put(path + '/' + bookingId).send({ note }).expect(200);
+    await admin.put(path + '/' + bookingId).send({ note }).expect(200, resolution.body);
+    await admin.put(path + '/' + bookingId).send({ note: 'Replace the original review record.' }).expect(409);
+    const reviewed = await admin.get(path).query({ status: 'REVIEWED' }).expect(200);
+    expect(reviewed.body.bookings).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: bookingId, paymentVariance: { ...variance, note, reviewedAt: resolution.body.reviewedAt } }),
+    ]));
+    const receipt = await owner.get('/api/bookings/' + bookingId).expect(200);
+    expect(receipt.body.booking).toMatchObject({ paidPaise: 3_200, paymentStatus: 'PAID', finalPaise: 3_080 });
+    expect(receipt.body.booking.paymentVariance).toEqual({ ...variance, reviewedAt: resolution.body.reviewedAt });
     await owner.post('/api/reviews').send(review).expect(201);
     await owner.post('/api/reviews').send(review).expect(409);
     const current = await owner.get('/api/bookings').expect(200);

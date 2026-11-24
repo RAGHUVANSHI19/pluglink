@@ -11,6 +11,7 @@ Routes use the `/api` prefix. Send JSON unless uploading a file or forwarding a 
 | Reservations | `GET /bookings`, `POST /bookings`, `POST /bookings/:id/cancel`, `PATCH /bookings/:id/session` |
 | Host listings | `GET /hosts/overview`, `GET /hosts/stations`, `POST /hosts/stations`, `PATCH /hosts/stations/:id`, `POST /hosts/stations/:id/submit`, `POST /hosts/stations/:id/blocks`, `DELETE /hosts/stations/:id/blocks/:blockId` |
 | Payments | `GET /payments/:bookingId`, `POST /payments/:bookingId/order`, `POST /payments/:bookingId/verify`, `POST /payments/:bookingId/demo` |
+| Payment review | `GET /admin/payment-reviews`, `PUT /admin/payment-reviews/:bookingId` |
 | Reviews | `POST /reviews`, `POST /reviews/:id/report` |
 | Administrator | `GET /admin/overview`, `GET /admin/users`, `GET /admin/stations`, `PATCH /admin/stations/:id`, `GET /admin/bookings`, `GET /admin/issues`, `PATCH /admin/reviews/:id` |
 | Notifications | `GET /notifications`, `PATCH /notifications/read-all`, `PATCH /notifications/:id/read` |
@@ -22,3 +23,6 @@ Routes use the `/api` prefix. Send JSON unless uploading a file or forwarding a 
 Create a reservation with `{ "stationId": "...", "start": "<ISO timestamp>", "end": "<ISO timestamp>", "energyWh": 5000 }`. Use a slot returned by the availability endpoint. The server snapshots price and fees, and returns 409 if another active reservation occupies the slot. The server records payment through the payment routes, and uses the signed webhook when test checkout is configured.
 
 A host creates and submits their own station for admin review. A station decision accepts `APPROVED`, `REJECTED` or `SUSPENDED` and an optional reason when applicable. Only public, approved listings are bookable. Owners can review a completed reservation once.
+
+
+An administrator can query payment reviews with `status=OPEN` or `status=REVIEWED`, plus `limit` and `offset`. The review endpoint accepts a `note` of 8 to 500 characters and returns `reviewedAt`. Repeating the same decision is idempotent. Booking responses carry `paymentVariance` when the recorded payment and final charge differ or when an inactive reservation received a payment. Review notes are administrator-only.

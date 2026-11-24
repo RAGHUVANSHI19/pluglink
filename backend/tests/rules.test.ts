@@ -8,6 +8,7 @@ import {
   localDate,
   maximumEnergy,
 } from '../src/domain-rules.js';
+import { paymentVariance } from '../src/payment-variance.js';
 import { requireRole } from '../src/shared.js';
 import type { Request } from 'express';
 
@@ -75,5 +76,17 @@ describe('booking transitions and authorization', () => {
     expect(requireRole({ auth: owner } as Request, 'OWNER')).toEqual(owner);
     expect(() => requireRole({ auth: owner } as Request, 'ADMIN')).toThrow(/does not have access/i);
     expect(() => requireRole({} as Request, 'OWNER')).toThrow(/sign in/i);
+  });
+});
+
+describe('payment variance', () => {
+  it('distinguishes underpayment, overpayment and inactive receipts from matched charges', () => {
+    expect(paymentVariance('COMPLETED', 12_000, 10_000)).toEqual({ kind: 'CHARGED_LESS', amountPaise: 2_000 });
+    expect(paymentVariance('COMPLETED', 0, 10_000)).toEqual({ kind: 'CHARGED_MORE', amountPaise: 10_000 });
+    expect(paymentVariance('CANCELLED', null, 10_000)).toEqual({ kind: 'INACTIVE_RESERVATION', amountPaise: 10_000 });
+    expect(paymentVariance('EXPIRED', null, 10_000)).toEqual({ kind: 'INACTIVE_RESERVATION', amountPaise: 10_000 });
+    expect(paymentVariance('COMPLETED', 10_000, 10_000)).toBeNull();
+    expect(paymentVariance('EXPIRED', null, null)).toBeNull();
+    expect(paymentVariance('CONFIRMED', null, 10_000)).toBeNull();
   });
 });

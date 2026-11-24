@@ -1,3 +1,4 @@
+import { PaymentReviews } from "./payment-reviews";
 import { useDeferredValue, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -36,6 +37,7 @@ const tabs = [
   { id: "stations", label: "Stations & verification" },
   { id: "users", label: "Users" },
   { id: "bookings", label: "Bookings & payments" },
+  { id: "payment-reviews", label: "Payment review" },
   { id: "issues", label: "Reported issues" },
 ];
 const statusGroups = {
@@ -182,6 +184,7 @@ export function Admin() {
         {tab === "stations" && <AdminStations />}
         {tab === "users" && <AdminUsers />}
         {tab === "bookings" && <AdminBookings />}
+        {tab === "payment-reviews" && <PaymentReviews />}
         {tab === "issues" && <AdminIssues />}
       </div>
     </div>

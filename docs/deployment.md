@@ -14,6 +14,32 @@ npm start
 
 Set `NODE_ENV=production` at runtime, use the host-provided `PORT`, and set `APP_ORIGIN` to the exact public origin, such as `https://pluglink.example`. Supply an encrypted PostgreSQL connection string in `DATABASE_URL` when the provider requires TLS. Use a least-privilege application database account and apply migrations as a controlled release step. Check readiness at `/api/health`.
 
+## Container release
+
+The Dockerfile builds a non-root runtime image for Express and the built React app. Its release stage contains Prisma and the migrations. Give the runtime a PostgreSQL connection and persistent storage for uploaded photos. Configure an HTTPS reverse proxy for the app's loopback port.
+
+Create a protected production environment file or use your host's environment settings. Set `DATABASE_URL` and the exact HTTPS `APP_ORIGIN`. Set `MIGRATION_DATABASE_URL` if the deployment uses a separate migration role. That role needs permission to apply the schema and create the `btree_gist` extension. Keep application and migration credentials in the secret manager.
+
+```bash
+docker compose --env-file .env.production -f compose.production.yml up -d --build
+docker compose --env-file .env.production -f compose.production.yml ps
+```
+
+The application waits for the migration job and exposes its readiness check at `/api/health`. The Compose file binds only to host loopback so the reverse proxy owns public traffic. The upload volume persists separately from the app image.
+
+### Create an administrator
+
+Run the operator-only command against the migrated database and pass the new password through standard input from the secret manager. In Bash, the following prompts without echoing the password.
+
+```bash
+read -r -s pluglink_admin_password
+printf '%s\n' "$pluglink_admin_password" | docker compose --env-file .env.production -f compose.production.yml exec -T app \
+  node backend/dist/provision-admin.js --email admin@example.com --name 'PlugLink Admin' --phone '+911234567890'
+unset pluglink_admin_password
+```
+
+For a native Node.js deployment, use `npm run admin:provision --` with the same flags and password input. Rerunning for the same active administrator preserves the account and password. Email addresses already held by owner or host accounts need a separate administrator address.
+
 ## Environment settings
 
 | Setting | Purpose |
@@ -37,6 +63,10 @@ If you enable local filesystem uploads on a host, give the service persistent st
 
 Use provider-issued test keys beginning with `rzp_test_`. Set the provider's capture policy to capture test payments automatically, then register `https://<your-origin>/api/payments/webhook` with a shared webhook signing secret. Subscribe to `payment.captured`, `payment.failed`, and `order.paid`. Complete a sandbox checkout and confirm that the resulting order, payment, and booking agree in PlugLink.
 
+## Payment review
+
+Administrators use **Payment review** to see captured payments that differ from final charges and payments on cancelled or expired reservations. Recording an outcome preserves the operator note and audit entry. The original checkout receipt remains the payment of record. Process any adjustment or refund in the applicable billing system and record a non-sensitive reference in the review.
+
 ## Release dependencies
 
-Provision an administrator through a secure operator workflow. Development seed credentials and simulated identity or payment actions belong in isolated local environments. Validate Razorpay test checkout and signed webhooks with provider-issued credentials, configure an authorized identity provider and email delivery, and have qualified reviewers approve the draft legal and safety guidance before a public release.
+Development seed credentials and simulated identity or payment actions belong in isolated local environments. Validate Razorpay test checkout and signed webhooks with provider-issued credentials, configure an authorized identity provider and email delivery, and have qualified reviewers approve the draft legal and safety guidance before a public release.

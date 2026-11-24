@@ -23,6 +23,7 @@ import {
   Section,
   Stat,
   dashboardError,
+  paymentVarianceLabel,
   send,
   useDashboardTab,
   type Booking,
@@ -561,6 +562,21 @@ function BookingCard({
               ? "Razorpay test payment receipt"
               : "Payment receipt"}{" "}
           · {money(booking.paidPaise ?? due)} · {booking.id}
+        </p>
+      )}
+      {booking.paymentVariance && (
+        <p className="db-help db-inline-form">
+          <strong>{paymentVarianceLabel(booking.paymentVariance.kind)}</strong>
+          {" · "}
+          {money(booking.paymentVariance.amountPaise)}
+          {" · "}
+          {booking.paymentVariance.reviewedAt
+            ? "Reviewed by PlugLink"
+            : "Awaiting review"}
+          {" · "}
+          <Link className="db-text-link" to="/support">
+            Contact support
+          </Link>
         </p>
       )}
       {notice && <Notice success>{notice}</Notice>}

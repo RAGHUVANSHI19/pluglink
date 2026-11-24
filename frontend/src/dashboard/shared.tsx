@@ -20,6 +20,21 @@ export type BookingStatus =
   | "COMPLETED"
   | "EXPIRED";
 
+export type PaymentVariance = {
+  kind: "CHARGED_MORE" | "CHARGED_LESS" | "INACTIVE_RESERVATION";
+  amountPaise: number;
+  reviewedAt: string | null;
+  note?: string;
+};
+
+export function paymentVarianceLabel(kind: PaymentVariance["kind"]) {
+  return {
+    CHARGED_MORE: "Payment above final charge",
+    CHARGED_LESS: "Payment below final charge",
+    INACTIVE_RESERVATION: "Payment on an inactive reservation",
+  }[kind];
+}
+
 export interface Booking {
   id: string;
   stationId: string;
@@ -35,6 +50,7 @@ export interface Booking {
   finalPaise: number | null;
   status: BookingStatus;
   paymentStatus: string;
+  paymentVariance?: PaymentVariance | null;
   sample: boolean;
   createdAt: string;
   cancelledAt: string | null;

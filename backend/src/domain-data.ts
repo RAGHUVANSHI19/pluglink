@@ -1,6 +1,7 @@
 import { Prisma, type BookingStatus } from '@prisma/client';
 import { z } from 'zod';
 import { bookingHorizon, hasScheduledSlot, localDate } from './domain-rules.js';
+import { paymentVariance } from './payment-variance.js';
 import { fail, prisma } from './shared.js';
 
 type Database = Prisma.TransactionClient;
@@ -97,12 +98,15 @@ export const bookingRelations = {
   host: { select: { name: true } },
   review: { select: { id: true } },
   payment: { select: { amountPaise: true, provider: true, status: true } },
+  paymentReview: { select: { reviewedAt: true, note: true } },
 } satisfies Prisma.BookingInclude;
 
 export type BookingRecord = Prisma.BookingGetPayload<{ include: typeof bookingRelations }>;
 
 export function bookingResponse(booking: BookingRecord, viewer: { role: string; id: string }) {
   const contactVisible = viewer.role !== 'OWNER' || exposedStatuses.includes(booking.status);
+  const paidPaise = booking.payment?.status === 'PAID' ? booking.payment.amountPaise : null;
+  const variance = paymentVariance(booking.status, booking.finalPaise, paidPaise);
   return {
     id: booking.id,
     stationId: booking.stationId,
@@ -121,7 +125,12 @@ export function bookingResponse(booking: BookingRecord, viewer: { role: string; 
     finalPaise: booking.finalPaise,
     status: booking.status,
     paymentStatus: booking.paymentStatus,
-    paidPaise: booking.payment?.status === 'PAID' ? booking.payment.amountPaise : null,
+    paidPaise,
+    paymentVariance: variance ? {
+      ...variance,
+      reviewedAt: booking.paymentReview?.reviewedAt ?? null,
+      ...(viewer.role === 'ADMIN' && booking.paymentReview ? { note: booking.paymentReview.note } : {}),
+    } : null,
     paymentProvider: booking.payment?.provider ?? null,
     sample: booking.sample,
     createdAt: booking.createdAt,

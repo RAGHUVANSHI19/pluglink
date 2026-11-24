@@ -71,6 +71,7 @@ model User {
   favorites    Favorite[]
   notifications Notification[]
   actions      AdminAction[]
+  paymentReviews PaymentReview[]
 
   @@index([role, status])
 }
@@ -204,6 +205,7 @@ model Booking {
   station            ChargingStation @relation(fields: [stationId], references: [id])
   chargingSession    ChargingSession?
   payment            Payment?
+  paymentReview      PaymentReview?
   review             Review?
   notifications      Notification[]
 
@@ -233,6 +235,17 @@ model Payment {
   createdAt         DateTime      @default(now()) @db.Timestamptz
   updatedAt         DateTime      @updatedAt @db.Timestamptz
   booking           Booking       @relation(fields: [bookingId], references: [id])
+}
+
+model PaymentReview {
+  bookingId  String   @id
+  adminId    String
+  note       String
+  reviewedAt DateTime @default(now()) @db.Timestamptz
+  booking    Booking  @relation(fields: [bookingId], references: [id])
+  admin      User     @relation(fields: [adminId], references: [id])
+
+  @@index([adminId])
 }
 
 model PaymentEvent {

@@ -89,7 +89,7 @@ Playwright starts Vite and Express from `npm run dev` unless a local server is a
 The production build supports a same-origin deployment on a Node.js host with managed PostgreSQL. Set the canonical HTTPS origin and database connection string, run migrations, build the frontend and backend, then start Express. See the full environment and hosting notes. [Deployment](docs/deployment.md)
 
 - Razorpay requires test credentials and a registered webhook secret. The local demo payment flow is available without these credentials.
-- The initial payment uses the booking estimate. The session records the final calculated charge, and automatic adjustments or refunds require further work.
+- Payment review flags captured payments that differ from final charges or belong to inactive reservations. Admins can record an auditable decision. Moving money or issuing a refund still requires the billing provider.
 - Host identity verification uses a labeled local simulation where configured. An accredited provider and an approved consent flow are needed before genuine Aadhaar verification. Raw Aadhaar numbers and CCTV recordings are outside the application.
 - Hosts can record manual demo meter readings. Real meter telemetry and automated payouts require additional integrations.
 - Notifications are in-app. Account recovery can use Resend when configured. Booking and station messages are delivered through the in-app inbox.
